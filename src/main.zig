@@ -11,24 +11,20 @@ pub fn main() !void {
         const conn = try listener.accept();
         const reader = conn.stream.reader();
         std.debug.print("connection accepted with {any}\n", .{conn});
-        while (true) {
-            const bytes = try reader.readUntilDelimiterOrEofAlloc(allocator, '\n', 1024);
-            if (bytes) |line| {
-                defer allocator.free(line);
-                for (line) |ch| {
-                    std.debug.print("{c}", .{ch});
-                }
-                std.debug.print("{s}", .{"\n"});
-                // NOTE: removing this if statement will make the browser hang.
-                // By stopping to load the page you will trigger the closing of the connection from the client side.
-                if (line[0] == '\r') {
-                    std.debug.print("Header end\n", .{});
-                    break;
-                }
-            } else {
-                std.debug.print("Connection closed by the client.\n", .{});
+        while (try reader.readUntilDelimiterOrEofAlloc(allocator, '\n', 1024)) |line| {
+            defer allocator.free(line);
+            for (line) |ch| {
+                std.debug.print("{c}", .{ch});
+            }
+            std.debug.print("{s}", .{"\n"});
+            // NOTE: removing this if statement will make the browser hang.
+            // By stopping to load the page you will trigger the closing of the connection from the client side.
+            if (line[0] == '\r') {
+                std.debug.print("Header end\n", .{});
                 break;
             }
+        } else {
+            std.debug.print("Connection closed by the client.\n", .{});
         }
     }
 }
